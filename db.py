@@ -287,6 +287,18 @@ def get_attendance_alerts(threshold=75):
     conn.close()
     return results
 
+def backup_db(dest_path):
+    """Create a backup of the database file."""
+    import shutil
+    try:
+        if not os.path.exists(os.path.dirname(dest_path)):
+            os.makedirs(os.path.dirname(dest_path))
+        shutil.copy2(DB_PATH, dest_path)
+        return True
+    except Exception as e:
+        print(f"Backup error: {e}")
+        return False
+
 if __name__ == "__main__":
     initialize_db()
     # Add default depts if empty

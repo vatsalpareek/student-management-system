@@ -35,7 +35,8 @@
 - [x] Attendance Alerts for students below 75%
 - [x] Real-time Dashboard stats (Actual DB counts)
 
-## ⏳ Phase 6: Final Polish & Packaging
-- [ ] Dark/Light mode toggle
-- [ ] Database backup
-- [ ] Executable (.exe) generation
+## ✅ Phase 6: Final Polish & Packaging
+- [x] Theme persistence and toggle
+- [x] Database Backup functionality
+- [x] Integrated Navigation & Data Refresh
+- [x] Packaging guide for .exe production

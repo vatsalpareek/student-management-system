@@ -1,5 +1,6 @@
 import customtkinter as ctk
-from tkinter import messagebox
+from tkinter import messagebox, filedialog
+import os
 from students import StudentsFrame
 from marks import MarksFrame
 from attendance import AttendanceFrame
@@ -46,9 +47,13 @@ class DashboardFrame(ctk.CTkFrame):
         self.appearance_mode_menu = ctk.CTkOptionMenu(self.sidebar_frame, values=["Light", "Dark", "System"], command=self.change_appearance_mode)
         self.appearance_mode_menu.grid(row=9, column=0, padx=20, pady=(10, 10))
 
+        # Backup Button
+        self.backup_button = ctk.CTkButton(self.sidebar_frame, text="Backup Database", fg_color="gray", command=self.handle_backup)
+        self.backup_button.grid(row=10, column=0, padx=20, pady=(0, 10))
+
         # Logout Button
         self.logout_button = ctk.CTkButton(self.sidebar_frame, text="Logout", fg_color="transparent", border_width=1, command=self.on_logout)
-        self.logout_button.grid(row=10, column=0, padx=20, pady=20)
+        self.logout_button.grid(row=11, column=0, padx=20, pady=20)
 
         # 2. Main Content Frame
         self.main_content = ctk.CTkFrame(self, corner_radius=15)
@@ -144,3 +149,11 @@ class DashboardFrame(ctk.CTkFrame):
 
     def change_appearance_mode(self, new_mode):
         ctk.set_appearance_mode(new_mode)
+
+    def handle_backup(self):
+        dest = filedialog.asksaveasfilename(defaultextension=".db", filetypes=[("Database Files", "*.db")])
+        if dest:
+            if db.backup_db(dest):
+                messagebox.showinfo("Success", f"Backup created: {os.path.basename(dest)}")
+            else:
+                messagebox.showerror("Error", "Backup failed!")
