@@ -95,7 +95,7 @@ class StudentsFrame(ctk.CTkFrame):
 
     def create_field(self, label, variable):
         ctk.CTkLabel(self.form_frame, text=label).pack(anchor="w", padx=20)
-        ctk.CTkEntry(self.form_frame, variable=variable).pack(fill="x", padx=20, pady=(0, 10))
+        ctk.CTkEntry(self.form_frame, textvariable=variable).pack(fill="x", padx=20, pady=(0, 10))
 
     def refresh_departments(self):
         depts = db.get_departments()
