@@ -22,10 +22,12 @@
 - [x] Delete and Clear functionality
 - [x] Dynamic Department dropdowns
 
-## ⏳ Phase 4: Academic & Attendance
-- [ ] Attendance entry & tracking
-- [ ] Subject-wise marks entry
-- [ ] Grade calculation logic
+## ✅ Phase 4: Academic & Attendance
+- [x] Attendance tracking UI with bulk entry
+- [x] Database logging for daily attendance
+- [x] Subject-wise marks entry system
+- [x] Auto-calculation of Percentage and Totals
+- [x] Marksheet preview table
 
 ## ⏳ Phase 5: Reports & Analytics
 - [ ] CSV Export

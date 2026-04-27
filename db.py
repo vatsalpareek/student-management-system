@@ -180,6 +180,57 @@ def search_students(query):
     conn.close()
     return results
 
+# --- Attendance Operations ---
+
+def mark_attendance(student_id, date, status):
+    """Mark a student as present or absent."""
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        INSERT INTO attendance (student_id, date, status) 
+        VALUES (?, ?, ?)
+    ''', (student_id, date, status))
+    conn.commit()
+    conn.close()
+    return True
+
+def get_student_attendance(student_id):
+    """Get attendance report for a specific student."""
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM attendance WHERE student_id = ? ORDER BY date DESC", (student_id,))
+    report = cursor.fetchall()
+    conn.close()
+    return report
+
+# --- Marks Operations ---
+
+def add_marks(student_id, subject, marks, max_marks=100):
+    """Save or update marks for a student."""
+    conn = connect_db()
+    cursor = conn.cursor()
+    # Check if marks already exist for this subject
+    cursor.execute("SELECT id FROM marks WHERE student_id = ? AND subject = ?", (student_id, subject))
+    existing = cursor.fetchone()
+    
+    if existing:
+        cursor.execute("UPDATE marks SET marks_obtained = ? WHERE id = ?", (marks, existing['id']))
+    else:
+        cursor.execute("INSERT INTO marks (student_id, subject, marks_obtained, max_marks) VALUES (?, ?, ?, ?)",
+                       (student_id, subject, marks, max_marks))
+    conn.commit()
+    conn.close()
+    return True
+
+def get_student_marks(student_id):
+    """Fetch all subject marks for a student."""
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM marks WHERE student_id = ?", (student_id,))
+    marks = cursor.fetchall()
+    conn.close()
+    return marks
+
 if __name__ == "__main__":
     initialize_db()
     # Add default depts if empty

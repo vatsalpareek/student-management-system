@@ -1,6 +1,8 @@
 import customtkinter as ctk
 from tkinter import messagebox
 from students import StudentsFrame
+from marks import MarksFrame
+from attendance import AttendanceFrame
 
 class DashboardFrame(ctk.CTkFrame):
     def __init__(self, parent, user_data, on_logout):
@@ -70,15 +72,25 @@ class DashboardFrame(ctk.CTkFrame):
         elif page_name == "students":
             self.show_students()
         elif page_name == "attendance":
-            self.show_placeholder("Attendance Tracking")
+            self.show_attendance()
         elif page_name == "marks":
-            self.show_placeholder("Academic Records")
+            self.show_marks()
         elif page_name == "reports":
             self.show_placeholder("Reports & Analytics")
 
     def show_students(self):
         """Show the Students Management module."""
         self.current_page_frame = StudentsFrame(self.main_content)
+        self.current_page_frame.pack(fill="both", expand=True, padx=20, pady=20)
+
+    def show_marks(self):
+        """Show the Academic Records module."""
+        self.current_page_frame = MarksFrame(self.main_content)
+        self.current_page_frame.pack(fill="both", expand=True, padx=20, pady=20)
+
+    def show_attendance(self):
+        """Show the Attendance Tracking module."""
+        self.current_page_frame = AttendanceFrame(self.main_content)
         self.current_page_frame.pack(fill="both", expand=True, padx=20, pady=20)
 
     def show_home(self):
