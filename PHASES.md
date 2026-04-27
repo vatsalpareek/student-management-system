@@ -15,11 +15,12 @@
 - [x] Dark/Light mode theme switcher
 - [x] Multi-page placeholder structure
 
-## ⏳ Phase 3: Student Management (CRUD)
-- [ ] Add Student Form
-- [ ] View Students Table (Scrollable)
-- [ ] Update/Delete functionality
-- [ ] Search by ID/Name
+## ✅ Phase 3: Student Management (CRUD)
+- [x] Student Database Schema integration
+- [x] Student Registration Form with validation
+- [x] Searchable Student Table (Real-time DB fetch)
+- [x] Delete and Clear functionality
+- [x] Dynamic Department dropdowns
 
 ## ⏳ Phase 4: Academic & Attendance
 - [ ] Attendance entry & tracking
