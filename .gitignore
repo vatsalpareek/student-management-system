@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+
+# PyInstaller
+build/
+dist/
+*.spec
+
+# Database
+# We keep the schema, but not the actual data file if you want it private
+# database/student_system.db (uncomment if you want to keep db private)
+
+# OS
+.DS_Store
+debug_log.txt
