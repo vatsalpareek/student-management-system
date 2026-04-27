@@ -1,9 +1,26 @@
 import sqlite3
 import hashlib
 import os
+import sys
 
-# Database path
-DB_PATH = os.path.join("database", "student_system.db")
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
+# Database path - Use a user-writable folder (Home directory)
+HOME_DIR = os.path.expanduser("~")
+DB_DIR = os.path.join(HOME_DIR, "StudentManagementDB")
+
+if not os.path.exists(DB_DIR):
+    os.makedirs(DB_DIR)
+
+DB_PATH = os.path.join(DB_DIR, "student_system.db")
 
 def connect_db():
     """Connect to the SQLite database."""

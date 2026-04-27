@@ -11,7 +11,8 @@ class App(ctk.CTk):
         super().__init__()
 
         self.title("Student Database Management System")
-        self.geometry("1100x600")
+        self.geometry("1100x700")
+        self.minsize(1000, 650) # Safety Wall: Prevents cutting off boxes
 
         # Initialize Database
         initialize_db()

@@ -22,6 +22,8 @@ class MarksFrame(ctk.CTkFrame):
         
         self.roll_search = ctk.CTkEntry(search_frame, placeholder_text="Enter Roll No...")
         self.roll_search.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        self.roll_search.bind("<Return>", lambda e: self.find_student())
+        
         ctk.CTkButton(search_frame, text="Find", width=60, command=self.find_student).pack(side="left")
 
         # Info Display

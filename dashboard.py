@@ -46,6 +46,7 @@ class DashboardFrame(ctk.CTkFrame):
         self.appearance_mode_label.grid(row=8, column=0, padx=20, pady=(10, 0))
         self.appearance_mode_menu = ctk.CTkOptionMenu(self.sidebar_frame, values=["Light", "Dark", "System"], command=self.change_appearance_mode)
         self.appearance_mode_menu.grid(row=9, column=0, padx=20, pady=(10, 10))
+        self.appearance_mode_menu.set("Dark") # Sync dropdown with reality
 
         # Backup Button
         self.backup_button = ctk.CTkButton(self.sidebar_frame, text="Backup Database", fg_color="gray", command=self.handle_backup)
