@@ -3,6 +3,8 @@ from tkinter import messagebox
 from students import StudentsFrame
 from marks import MarksFrame
 from attendance import AttendanceFrame
+from reports import ReportsFrame
+import db
 
 class DashboardFrame(ctk.CTkFrame):
     def __init__(self, parent, user_data, on_logout):
@@ -76,7 +78,12 @@ class DashboardFrame(ctk.CTkFrame):
         elif page_name == "marks":
             self.show_marks()
         elif page_name == "reports":
-            self.show_placeholder("Reports & Analytics")
+            self.show_reports()
+
+    def show_reports(self):
+        """Show the Reports module."""
+        self.current_page_frame = ReportsFrame(self.main_content)
+        self.current_page_frame.pack(fill="both", expand=True, padx=20, pady=20)
 
     def show_students(self):
         """Show the Students Management module."""
@@ -102,15 +109,18 @@ class DashboardFrame(ctk.CTkFrame):
         header = ctk.CTkLabel(self.current_page_frame, text=f"Welcome back, {self.user_data['full_name']}", font=ctk.CTkFont(size=24, weight="bold"))
         header.pack(anchor="w", pady=(0, 20))
 
+        # Real Stats from DB
+        stats = db.get_stats()
+
         # Stats Container
         stats_frame = ctk.CTkFrame(self.current_page_frame, fg_color="transparent")
         stats_frame.pack(fill="x", pady=10)
 
-        # Create Stat Cards (Mock Data for now)
-        self.create_stat_card(stats_frame, "Total Students", "124", 0)
-        self.create_stat_card(stats_frame, "Departments", "5", 1)
-        self.create_stat_card(stats_frame, "Avg Marks", "78%", 2)
-        self.create_stat_card(stats_frame, "Attendance", "92%", 3)
+        # Create Stat Cards
+        self.create_stat_card(stats_frame, "Total Students", str(stats['students']), 0)
+        self.create_stat_card(stats_frame, "Departments", str(stats['depts']), 1)
+        self.create_stat_card(stats_frame, "Avg Marks", stats['avg_marks'], 2)
+        self.create_stat_card(stats_frame, "System Status", "Live", 3)
 
     def create_stat_card(self, parent, title, value, column):
         card = ctk.CTkFrame(parent, width=180, height=100, corner_radius=10)

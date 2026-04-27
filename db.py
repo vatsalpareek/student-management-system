@@ -231,6 +231,62 @@ def get_student_marks(student_id):
     conn.close()
     return marks
 
+# --- Analytics & Reports ---
+
+def get_stats():
+    """Fetch general statistics for the dashboard."""
+    conn = connect_db()
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT COUNT(*) FROM students")
+    total_students = cursor.fetchone()[0]
+    
+    cursor.execute("SELECT COUNT(*) FROM departments")
+    total_depts = cursor.fetchone()[0]
+    
+    cursor.execute("SELECT AVG(marks_obtained) FROM marks")
+    avg_marks = cursor.fetchone()[0] or 0
+    
+    conn.close()
+    return {
+        "students": total_students,
+        "depts": total_depts,
+        "avg_marks": f"{avg_marks:.1f}%"
+    }
+
+def get_top_students(limit=5):
+    """Fetch students with highest average marks."""
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT s.name, AVG(m.marks_obtained) as avg_score
+        FROM students s
+        JOIN marks m ON s.roll_no = m.student_id
+        GROUP BY s.roll_no
+        ORDER BY avg_score DESC
+        LIMIT ?
+    ''', (limit,))
+    results = cursor.fetchall()
+    conn.close()
+    return results
+
+def get_attendance_alerts(threshold=75):
+    """Fetch students with attendance below threshold."""
+    # This is a simplified calculation: (Present / Total Days) * 100
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT s.name, 
+               (COUNT(CASE WHEN a.status = 'Present' THEN 1 END) * 100.0 / COUNT(a.id)) as perc
+        FROM students s
+        JOIN attendance a ON s.roll_no = a.student_id
+        GROUP BY s.roll_no
+        HAVING perc < ?
+    ''', (threshold,))
+    results = cursor.fetchall()
+    conn.close()
+    return results
+
 if __name__ == "__main__":
     initialize_db()
     # Add default depts if empty

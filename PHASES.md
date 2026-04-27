@@ -29,10 +29,11 @@
 - [x] Auto-calculation of Percentage and Totals
 - [x] Marksheet preview table
 
-## ⏳ Phase 5: Reports & Analytics
-- [ ] CSV Export
-- [ ] Top students list
-- [ ] Analytics Charts (optional)
+## ✅ Phase 5: Reports & Analytics
+- [x] CSV Export for student data
+- [x] Top Students (Toppers) table with ranking
+- [x] Attendance Alerts for students below 75%
+- [x] Real-time Dashboard stats (Actual DB counts)
 
 ## ⏳ Phase 6: Final Polish & Packaging
 - [ ] Dark/Light mode toggle
