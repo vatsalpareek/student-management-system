@@ -91,14 +91,55 @@ class StudentsFrame(ctk.CTkFrame):
             self.dept_dropdown.configure(values=names)
             self.vars["dept"].set(names[0])
 
+    def validate_fields(self):
+        import re
+        roll_no = self.vars["roll_no"].get().strip()
+        name = self.vars["name"].get().strip()
+        email = self.vars["email"].get().strip()
+        phone = self.vars["phone"].get().strip()
+
+        if not roll_no or not name or not email or not phone:
+            messagebox.showwarning("Validation Error", "All fields (Roll Number, Full Name, Email, Phone) are mandatory!")
+            return False
+
+        if not roll_no.isalnum():
+            messagebox.showwarning("Validation Error", "Roll Number must be alphanumeric only (no spaces or special characters)!")
+            return False
+
+        email_pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+        if not re.match(email_pattern, email):
+            messagebox.showwarning("Validation Error", "Please enter a valid email address (e.g., user@domain.com)!")
+            return False
+
+        if not phone.isdigit() or len(phone) != 10:
+            messagebox.showwarning("Validation Error", "Phone number must be exactly 10 digits containing only numbers!")
+            return False
+
+        return True
+
     def add_student(self):
-        data = (self.vars["roll_no"].get(), self.vars["name"].get(), self.vars["email"].get(),
-                self.vars["phone"].get(), "", self.vars["gender"].get(), "",
-                self.dept_map.get(self.vars["dept"].get()), self.vars["semester"].get())
-        if not data[0]: return
+        if not self.validate_fields():
+            return
+            
+        data = (
+            self.vars["roll_no"].get().strip(),
+            self.vars["name"].get().strip(),
+            self.vars["email"].get().strip(),
+            self.vars["phone"].get().strip(),
+            "", # dob
+            self.vars["gender"].get(),
+            "", # address
+            self.dept_map.get(self.vars["dept"].get()),
+            self.vars["semester"].get()
+        )
+        
         success, msg = db.add_student(data)
-        if success: self.load_students(); self.clear_fields()
-        else: messagebox.showerror("Error", msg)
+        if success:
+            messagebox.showinfo("Success", msg)
+            self.load_students()
+            self.clear_fields()
+        else:
+            messagebox.showerror("Error", msg)
 
     def load_students(self):
         self.tree.delete(*self.tree.get_children())
@@ -115,9 +156,52 @@ class StudentsFrame(ctk.CTkFrame):
         sel = self.tree.focus()
         if not sel: return
         row = self.tree.item(sel)['values']
-        self.vars["roll_no"].set(row[0]); self.vars["name"].set(row[1])
+        if not row: return
+        roll_no = row[0]
+        
+        student = db.get_student(roll_no)
+        if student:
+            self.vars["roll_no"].set(student['roll_no'])
+            self.vars["name"].set(student['name'])
+            self.vars["email"].set(student['email'] if student['email'] else "")
+            self.vars["phone"].set(student['phone'] if student['phone'] else "")
+            self.vars["gender"].set(student['gender'] if student['gender'] else "Male")
+            self.vars["semester"].set(student['semester'] if student['semester'] else "Sem 1")
+            if student['dept_name'] in self.dept_map:
+                self.vars["dept"].set(student['dept_name'])
 
-    def update_student(self): messagebox.showinfo("Info", "Coming in next update!")
+    def update_student(self):
+        roll_no = self.vars["roll_no"].get().strip()
+        if not roll_no:
+            messagebox.showwarning("Warning", "Please select a student from the list or enter a Roll Number to update.")
+            return
+            
+        student = db.get_student(roll_no)
+        if not student:
+            messagebox.showerror("Error", f"No student found with Roll Number '{roll_no}'.")
+            return
+            
+        if not self.validate_fields():
+            return
+            
+        data = (
+            self.vars["name"].get().strip(),
+            self.vars["email"].get().strip(),
+            self.vars["phone"].get().strip(),
+            "", # dob
+            self.vars["gender"].get(),
+            "", # address
+            self.dept_map.get(self.vars["dept"].get()),
+            self.vars["semester"].get()
+        )
+        
+        success, msg = db.update_student(roll_no, data)
+        if success:
+            messagebox.showinfo("Success", msg)
+            self.load_students()
+            self.clear_fields()
+        else:
+            messagebox.showerror("Error", msg)
     def delete_student(self):
         r = self.vars["roll_no"].get()
         if r and messagebox.askyesno("!", f"Delete {r}?"):

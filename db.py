@@ -48,6 +48,22 @@ def initialize_db():
     )
     ''')
 
+    # Migrate users table if columns are missing (Backward Compatibility)
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN email TEXT")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+        
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN security_question TEXT")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+        
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN security_answer TEXT")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+
     # 2. Departments Table
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS departments (
@@ -183,7 +199,7 @@ def delete_student(roll_no):
     return True
 
 def search_students(query):
-    """Search students by name or roll number."""
+    """Search students by name, roll number, email, phone, semester, or department name."""
     conn = connect_db()
     cursor = conn.cursor()
     search_query = f"%{query}%"
@@ -191,8 +207,13 @@ def search_students(query):
         SELECT s.*, d.name as dept_name 
         FROM students s 
         LEFT JOIN departments d ON s.dept_id = d.id
-        WHERE s.name LIKE ? OR s.roll_no LIKE ?
-    ''', (search_query, search_query))
+        WHERE s.name LIKE ? 
+           OR s.roll_no LIKE ? 
+           OR s.email LIKE ? 
+           OR s.phone LIKE ? 
+           OR s.semester LIKE ? 
+           OR d.name LIKE ?
+    ''', (search_query, search_query, search_query, search_query, search_query, search_query))
     results = cursor.fetchall()
     conn.close()
     return results
@@ -303,6 +324,120 @@ def get_attendance_alerts(threshold=75):
     results = cursor.fetchall()
     conn.close()
     return results
+
+def get_student(roll_no):
+    """Fetch a student by roll number with department name."""
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute('''
+        SELECT s.*, d.name as dept_name 
+        FROM students s 
+        LEFT JOIN departments d ON s.dept_id = d.id
+        WHERE s.roll_no = ?
+    ''', (roll_no,))
+    student = cursor.fetchone()
+    conn.close()
+    return student
+
+def update_student(roll_no, data):
+    """Update student details in the database. data should be a tuple (name, email, phone, dob, gender, address, dept_id, semester)"""
+    conn = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute('''
+        UPDATE students 
+        SET name = ?, email = ?, phone = ?, dob = ?, gender = ?, address = ?, dept_id = ?, semester = ?
+        WHERE roll_no = ?
+        ''', data + (roll_no,))
+        conn.commit()
+        return True, "Student updated successfully!"
+    except sqlite3.IntegrityError as e:
+        return False, f"Error: Email already exists for another student."
+    except sqlite3.Error as e:
+        return False, f"Error: {str(e)}"
+    finally:
+        conn.close()
+
+def register_user(username, password, full_name, email, security_question, security_answer):
+    """Register a new admin user."""
+    conn = connect_db()
+    cursor = conn.cursor()
+    
+    # Check if username already exists
+    cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
+    if cursor.fetchone():
+        conn.close()
+        return False, "Username already exists!"
+        
+    # Check if email already exists if provided
+    if email:
+        cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
+        if cursor.fetchone():
+            conn.close()
+            return False, "Email already exists!"
+            
+    hashed_pw = hashlib.sha256(password.encode()).hexdigest()
+    hashed_ans = hashlib.sha256(security_answer.strip().lower().encode()).hexdigest()
+    
+    try:
+        cursor.execute('''
+            INSERT INTO users (username, password, full_name, email, security_question, security_answer)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (username, hashed_pw, full_name, email, security_question, hashed_ans))
+        conn.commit()
+        return True, "Registration successful!"
+    except sqlite3.Error as e:
+        return False, f"Error: {str(e)}"
+    finally:
+        conn.close()
+
+def get_user_security_question(username):
+    """Retrieve security question for a username."""
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT security_question FROM users WHERE username = ?", (username,))
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return row['security_question']
+    return None
+
+def reset_password(username, security_answer, new_password):
+    """Reset user password if security answer is correct."""
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT security_answer FROM users WHERE username = ?", (username,))
+    row = cursor.fetchone()
+    if not row:
+        conn.close()
+        return False, "User not found!"
+        
+    stored_answer = row['security_answer']
+    if not stored_answer:
+        conn.close()
+        return False, "No security question configured for this account."
+        
+    hashed_ans = hashlib.sha256(security_answer.strip().lower().encode()).hexdigest()
+    if hashed_ans != stored_answer:
+        conn.close()
+        return False, "Incorrect answer to security question."
+        
+    hashed_pw = hashlib.sha256(new_password.encode()).hexdigest()
+    cursor.execute("UPDATE users SET password = ? WHERE username = ?", (hashed_pw, username))
+    conn.commit()
+    conn.close()
+    return True, "Password reset successfully!"
+
+def retrieve_username_by_email(email):
+    """Retrieve username associated with an email address."""
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT username FROM users WHERE email = ?", (email,))
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return row['username']
+    return None
 
 def backup_db(dest_path):
     """Create a backup of the database file."""
