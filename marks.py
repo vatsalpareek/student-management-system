@@ -46,7 +46,17 @@ class MarksFrame(ctk.CTkFrame):
         ctk.CTkLabel(self.form_container, text="Marks Obtained").pack(anchor="w", padx=20)
         ctk.CTkEntry(self.form_container, textvariable=self.marks_var).pack(fill="x", padx=20, pady=(0, 10))
 
-        ctk.CTkButton(self.form_container, text="Save Marks", command=self.save_marks).pack(fill="x", padx=20, pady=20)
+        # Action Buttons Grid
+        btn_frame = ctk.CTkFrame(self.form_container, fg_color="transparent")
+        btn_frame.pack(fill="x", padx=20, pady=15)
+        
+        btn_frame.columnconfigure(0, weight=1)
+        btn_frame.columnconfigure(1, weight=1)
+        
+        ctk.CTkButton(btn_frame, text="Save", command=self.save_marks).grid(row=0, column=0, padx=5, pady=5, sticky="ew")
+        ctk.CTkButton(btn_frame, text="Update", command=self.update_marks).grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+        ctk.CTkButton(btn_frame, text="Delete", fg_color="#C0392B", hover_color="#922B21", command=self.delete_marks).grid(row=1, column=0, padx=5, pady=5, sticky="ew")
+        ctk.CTkButton(btn_frame, text="Clear", fg_color="gray", hover_color="dimgray", command=self.clear_fields).grid(row=1, column=1, padx=5, pady=5, sticky="ew")
 
         # --- RIGHT: MARKS LIST & CALCULATION ---
         self.right_frame = ctk.CTkFrame(self, corner_radius=15)
@@ -59,11 +69,13 @@ class MarksFrame(ctk.CTkFrame):
         self.tree.heading("marks", text="Marks")
         self.tree.heading("max", text="Max Marks")
         self.tree.pack(fill="both", expand=True, padx=20, pady=10)
+        self.tree.bind("<<TreeviewSelect>>", self.get_tree_selection)
 
         self.summary_label = ctk.CTkLabel(self.right_frame, text="Total: -- | Percentage: --%", font=ctk.CTkFont(size=16, weight="bold"))
         self.summary_label.pack(pady=20)
 
         self.selected_student = None
+        self.selected_subject_name = None
 
     def show_recommendations(self, event=None):
         if event and event.keysym in ("Up", "Down", "Return", "Escape"):
@@ -120,15 +132,25 @@ class MarksFrame(ctk.CTkFrame):
             )
             self.form_container.pack(fill="x")
             self.load_marks()
+            self.clear_fields()
         else:
             messagebox.showerror("Error", "Student not found!")
             self.form_container.pack_forget()
 
+    def get_tree_selection(self, event):
+        sel = self.tree.focus()
+        if not sel: return
+        row = self.tree.item(sel)['values']
+        if not row: return
+        self.selected_subject_name = row[0]
+        self.subject_var.set(row[0])
+        self.marks_var.set(row[1])
+
     def save_marks(self):
         if not self.selected_student: return
         
-        sub = self.subject_var.get()
-        mks = self.marks_var.get()
+        sub = self.subject_var.get().strip()
+        mks = self.marks_var.get().strip()
         
         if not sub or not mks:
             messagebox.showwarning("Warning", "Fill all fields")
@@ -136,12 +158,63 @@ class MarksFrame(ctk.CTkFrame):
             
         try:
             mks_int = int(mks)
+            if mks_int < 0 or mks_int > 100:
+                messagebox.showerror("Error", "Marks must be between 0 and 100")
+                return
             db.add_marks(self.selected_student['roll_no'], sub, mks_int)
             self.load_marks()
-            self.subject_var.set("")
-            self.marks_var.set("")
+            self.clear_fields()
         except ValueError:
             messagebox.showerror("Error", "Marks must be a number")
+
+    def update_marks(self):
+        if not self.selected_student: return
+        if not self.selected_subject_name:
+            messagebox.showwarning("Warning", "Please select a subject from the list to update")
+            return
+            
+        new_sub = self.subject_var.get().strip()
+        mks = self.marks_var.get().strip()
+        
+        if not new_sub or not mks:
+            messagebox.showwarning("Warning", "Fill all fields")
+            return
+            
+        try:
+            mks_int = int(mks)
+            if mks_int < 0 or mks_int > 100:
+                messagebox.showerror("Error", "Marks must be between 0 and 100")
+                return
+            success, msg = db.update_marks(self.selected_student['roll_no'], self.selected_subject_name, new_sub, mks_int)
+            if success:
+                messagebox.showinfo("Success", msg)
+                self.load_marks()
+                self.clear_fields()
+            else:
+                messagebox.showerror("Error", msg)
+        except ValueError:
+            messagebox.showerror("Error", "Marks must be a number")
+
+    def delete_marks(self):
+        if not self.selected_student: return
+        if not self.selected_subject_name:
+            messagebox.showwarning("Warning", "Please select a subject from the list to delete")
+            return
+            
+        if messagebox.askyesno("Confirm Delete", f"Are you sure you want to delete marks for subject '{self.selected_subject_name}'?"):
+            success, msg = db.delete_marks(self.selected_student['roll_no'], self.selected_subject_name)
+            if success:
+                messagebox.showinfo("Success", msg)
+                self.load_marks()
+                self.clear_fields()
+            else:
+                messagebox.showerror("Error", msg)
+
+    def clear_fields(self):
+        self.subject_var.set("")
+        self.marks_var.set("")
+        self.selected_subject_name = None
+        self.tree.selection_remove(self.tree.selection())
 
     def load_marks(self):
         if not self.selected_student: return

@@ -269,6 +269,45 @@ def get_student_marks(student_id):
     conn.close()
     return marks
 
+def update_marks(student_id, original_subject, new_subject, marks, max_marks=100):
+    """Update a student's marks for a specific subject, allowing changing the subject name."""
+    conn = connect_db()
+    cursor = conn.cursor()
+    try:
+        # Check if they are renaming to an already existing subject for this student (other than the original one)
+        if original_subject != new_subject:
+            cursor.execute("SELECT id FROM marks WHERE student_id = ? AND subject = ?", (student_id, new_subject))
+            if cursor.fetchone():
+                return False, f"Marks already exist for subject '{new_subject}'."
+                
+        cursor.execute('''
+            UPDATE marks 
+            SET subject = ?, marks_obtained = ?, max_marks = ?
+            WHERE student_id = ? AND subject = ?
+        ''', (new_subject, marks, max_marks, student_id, original_subject))
+        conn.commit()
+        return True, "Marks updated successfully!"
+    except sqlite3.Error as e:
+        return False, f"Database error: {str(e)}"
+    finally:
+        conn.close()
+
+def delete_marks(student_id, subject):
+    """Delete a student's marks for a specific subject."""
+    conn = connect_db()
+    cursor = conn.cursor()
+    try:
+        cursor.execute('''
+            DELETE FROM marks 
+            WHERE student_id = ? AND subject = ?
+        ''', (student_id, subject))
+        conn.commit()
+        return True, "Marks deleted successfully!"
+    except sqlite3.Error as e:
+        return False, f"Database error: {str(e)}"
+    finally:
+        conn.close()
+
 # --- Analytics & Reports ---
 
 def get_stats():
